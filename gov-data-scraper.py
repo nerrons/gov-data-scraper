@@ -45,7 +45,7 @@ try:
     time.sleep(5)
 
     # find main table
-    print('Scrapping data...')
+    print('Scraping data...')
     soup = BeautifulSoup(browser.page_source, features='html.parser')
     table = soup.find('table', attrs={ 'id': 'tabledata' })
 
