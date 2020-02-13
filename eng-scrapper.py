@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser(description='Turn gov data to csv.')
 parser.add_argument(
     'timeframe', 
     nargs='?', 
-    default='201911', 
+    default='201911',
     help='Default to 201911'
 )
 parser.add_argument(
