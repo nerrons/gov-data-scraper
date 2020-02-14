@@ -16,7 +16,6 @@ class CustomScraper(object):
 
         # constants
         self.index_url = 'http://english.customs.gov.cn/statics/report/monthly.html#'
-
         self.output_dir = time.strftime('%Y-%m-%d_%H,%M,%S', time.localtime()) + '/'
 
         # important info
@@ -26,6 +25,7 @@ class CustomScraper(object):
         options = Options()
         # options.headless = True
         self.driver = webdriver.Firefox(options=options)
+        self.driver.set_page_load_timeout(1000)
         self.driver.implicitly_wait(10)
 
     def run(self):
