@@ -9,8 +9,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import (
-    NoSuchElementException, 
-    StaleElementReferenceException, 
+    NoSuchElementException,
+    StaleElementReferenceException,
     ElementNotInteractableException,
     TimeoutException
 )
@@ -39,7 +39,7 @@ class AirportScraper(object):
 
         # driver
         options = Options()
-        # options.headless = True
+        options.headless = True
         self.driver = webdriver.Firefox(options=options)
         self.driver.implicitly_wait(10)
         self.driver.set_page_load_timeout(100)
