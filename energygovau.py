@@ -4,7 +4,7 @@ import logging
 import os
 from pathlib import Path
 import time
-import requests
+
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By

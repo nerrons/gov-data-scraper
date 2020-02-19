@@ -2,6 +2,7 @@ import csv
 from datetime import datetime, date, timedelta
 import time
 import os
+from pathlib import Path
 import logging
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
@@ -15,7 +16,6 @@ from selenium.common.exceptions import (
     TimeoutException
 )
 
-
 class AirportScraper(object):
     def __init__(self, days_ago=0, fetch_china=True, additional_airports=[]):
         super().__init__()
@@ -25,12 +25,14 @@ class AirportScraper(object):
         self.url_postfix = '/departures'
 
         self.target_day = (date.today() - timedelta(days=days_ago)).strftime('%b %d')
+        self.target_day_str = (date.today() - timedelta(days=days_ago)).strftime('%Y-%m-%d')
         self.prev_day = date.today() - timedelta(days=days_ago + 1)
         self.next_day = date.today() - timedelta(days=days_ago - 1)
 
-        filename_stem = time.strftime('%Y-%m-%d_%H,%M,%S', time.localtime()) + '_'
-        self.filename_flights = filename_stem + 'flights.csv'
-        self.filename_stats = filename_stem + 'stats.csv'
+        self.output_dir = 'flightradar24_' + time.strftime('%Y-%m-%d_%H,%M,%S', time.localtime()) + '/'
+        filename_stem = self.target_day_str + '_'
+        self.filename_flights = self.output_dir + filename_stem + 'flights.csv'
+        self.filename_stats = self.output_dir + filename_stem + 'stats.csv'
 
         # important info
         self.fetch_china = fetch_china
@@ -53,17 +55,11 @@ class AirportScraper(object):
         self.logger.info("Initialization finished.")
 
     def run(self):
-        self.logger.info('Scraping flights of date: %s', self.target_day)
-        self.logger.info('Files to be written: %s, %s', self.filename_flights, self.filename_stats)
+        # make dir
+        Path(self.output_dir).mkdir(parents=True, exist_ok=True)
+        self.logger.info('Files will be written in the directory: %s', self.output_dir)
 
-        # write csv headers
-        with open(self.filename_flights, 'w') as f:
-            writer = csv.writer(f)
-            writer.writerow(['departure_airport', 'time', 'flight_number', 'dest_airport', 'status'])
-        with open(self.filename_stats, 'w') as f:
-            writer = csv.writer(f)
-            writer.writerow(['departure_airport', 'num_of_flights'])
-
+        # scrape everything
         try:
             if self.fetch_china:
                 self.gen_airport_list()
@@ -89,6 +85,16 @@ class AirportScraper(object):
                     ),
                 table_rows)))
         self.logger.info('Airport list: %s', list(map(lambda x: x.upper(), self.airport_codes_list)))
+
+    def write_flight_rows(self, rows):
+        with open(self.filename_flights, 'a') as f:
+            writer = csv.writer(f)
+            writer.writerows([self.target_day_str] + row for row in rows if row)
+    
+    def write_stats_row(self, code, num):
+        with open(self.filename_stats, 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow([code.upper(), num])
 
     def scrape_airport(self, code):
         def parse_separator_date(text):
@@ -132,9 +138,11 @@ class AirportScraper(object):
                 departure_airport = code.upper()
                 flight_time = row.find_element_by_css_selector('td.ng-binding').text
                 flight_number = row.find_element_by_css_selector('td.cell-flight-number > a.notranslate.ng-binding').text
+                airline = row.find_element_by_css_selector('td.cell-airline > a.notranslate.ng-binding').text.strip()
+                dest_city = row.find_element_by_css_selector('td:nth-child(3) > div:nth-child(1) > span').text.strip()
                 dest_airport = row.find_element_by_css_selector('td:nth-child(3) > div:nth-child(1) > a.notranslate.ng-binding').text[1:-1]
                 status = row.find_element_by_css_selector('td:nth-child(7) > span.ng-binding').text
-                return (departure_airport, flight_time, flight_number, dest_airport, status)
+                return [departure_airport, flight_time, flight_number, dest_city, dest_airport, airline, status]
 
             today_flights = self.driver.find_elements_by_css_selector("tr[data-date*='" + self.target_day + "']")
             return list(map(parse_flight_row, today_flights))
@@ -165,15 +173,8 @@ class AirportScraper(object):
 
             rows = prepare_rows()
 
-            # write flight details
-            with open(self.filename_flights, 'a') as f:
-                writer = csv.writer(f)
-                writer.writerows(row for row in rows if row)
-
-            # write flight stats
-            with open(self.filename_stats, 'a') as f:
-                writer = csv.writer(f)
-                writer.writerow([code.upper(), len(rows)])
+            self.write_flight_rows(rows)
+            self.write_stats_row(code, len(rows))
             
             # update total stats, wrap up
             self.stats['total_num_of_flights'] += len(rows)
@@ -181,7 +182,7 @@ class AirportScraper(object):
 
         except TimeoutException:
             self.airport_codes_list.append(code)
-            self.logger.exception('Timeout scraping airport: %s. Will retry.', code.upper())
+            self.logger.warning('Timeout scraping airport: %s. Will retry.', code.upper())
         except Exception as e:
             self.airport_codes_list.append(code)
             self.logger.exception(e)
@@ -192,5 +193,5 @@ if __name__ == "__main__":
     # days_ago=0                   how many days ago (e.g. 1 day ago means get yesterday's data)
     # fetch_china=True             whether to get all china airports
     # additional_airports=[]       a list of additional airports to scrape
-    airport_scrapper = AirportScraper(1, True, ['sin', 'hkg'])
+    airport_scrapper = AirportScraper(0, True, ['sin', 'hkg'])
     airport_scrapper.run()
