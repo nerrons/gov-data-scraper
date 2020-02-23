@@ -67,7 +67,7 @@ class AirportScraper(object):
                 self.scrape_airport(self.airport_codes_list[0])
                 self.airport_codes_list.pop(0)
 
-            self.logger.info('Total flights: %s', self.stats['total_num_of_flights'])
+            self.logger.info('Total flights: %s for %s', self.stats['total_num_of_flights'], self.target_day_str)
         finally:
             self.driver.quit()
 
@@ -193,5 +193,5 @@ if __name__ == "__main__":
     # days_ago=0                   how many days ago (e.g. 1 day ago means get yesterday's data)
     # fetch_china=True             whether to get all china airports
     # additional_airports=[]       a list of additional airports to scrape
-    airport_scrapper = AirportScraper(0, True, ['sin', 'hkg'])
+    airport_scrapper = AirportScraper(1, True, ['sin', 'hkg'])
     airport_scrapper.run()
