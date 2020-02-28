@@ -21,6 +21,7 @@ class AusLNGScraper(object):
         super().__init__()
 
         # constants
+        self.url_aemo = 'https://www.aemo.com.au/energy-systems/gas/gas-bulletin-board-gbb/gbb-reports/lng-maintenance'
         self.url_chevron = 'https://australia.chevron.com/our-businesses/scheduled-maintenance-activity-notices'
         self.url_woodside = 'https://www.woodside.com.au/sustainability/working-openly/facility-maintenance-information'
         self.output_dir = 'aus_' + time.strftime('%Y-%m-%d_%H,%M,%S', time.localtime()) + '/'
@@ -35,8 +36,14 @@ class AusLNGScraper(object):
 
         # driver
         options = Options()
-        options.headless = True
-        self.driver = webdriver.Firefox(options=options)
+        # options.headless = True
+        fp = webdriver.FirefoxProfile()
+        fp.set_preference("browser.download.folderList", 2)
+        fp.set_preference("browser.download.dir", str(Path.cwd()) + '/' + self.output_dir)
+        fp.set_preference("browser.helperApps.neverAsk.openFile", "application/pdf, application/x-pdf")
+        fp.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/pdf")
+        fp.set_preference("pdfjs.disabled", True)
+        self.driver = webdriver.Firefox(fp, options=options)
         self.driver.implicitly_wait(1)
         self.driver.set_page_load_timeout(40)
         #ignored_exceptions = (NoSuchElementException, StaleElementReferenceException)
@@ -55,11 +62,12 @@ class AusLNGScraper(object):
         try:
             self.write_rows(self.csv_headers)
             self.scrape_aemo()
-            self.scrape_chevron()
-            self.scrape_woodside()
+            #self.scrape_chevron()
+            #self.scrape_woodside()
             self.logger.info('All done.')
         finally:
-            self.driver.quit()
+            #self.driver.quit()
+            print('haha')
 
     def standardize_date(self, input_format):
         output_format = self.DATE_FORMAT
@@ -74,8 +82,12 @@ class AusLNGScraper(object):
 
 
     def scrape_aemo(self):
-        url = "https://www.aemo.com.au/-/media/files/gas/natural_gas_services_bulletin_board/site-content/gbb-documents/notices/lng-information/lng-maintenance_20200116_aplng_update.pdf?la=en"
-        self.driver.get(url)
+        self.driver.get(self.url_aemo)
+        self.driver.execute_script('document.querySelector(\'a[title="File 18"]\').setAttribute("download", "")')
+        submit_button = self.driver.find_element_by_css_selector('div.submit')
+        submit_button.click()
+        file_a = self.driver.find_element_by_css_selector('a[title="File 18"] > div.file-list-wrapper > h5.field-title')
+        file_a.click()
 
 
     def scrape_chevron(self):

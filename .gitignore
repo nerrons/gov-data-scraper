@@ -133,3 +133,5 @@ geckodriver.log
 .vscode/
 *.csv
 .DS_Store
+*.pdf
+*.xlsx
