@@ -17,7 +17,7 @@ from selenium.common.exceptions import (
 )
 
 class AirportScraper(object):
-    def __init__(self, days_ago=0, fetch_china=True, additional_airports=[]):
+    def __init__(self, days_ago=0, countries=['china', 'south-korea', 'italy'], additional_airports=[]):
         super().__init__()
 
         # constants
@@ -35,7 +35,7 @@ class AirportScraper(object):
         self.filename_stats = self.output_dir + filename_stem + 'stats.csv'
 
         # important info
-        self.fetch_china = fetch_china
+        self.countries = countries
         self.airport_codes_list = additional_airports
         self.stats = { 'total_num_of_flights': 0 }
 
@@ -61,8 +61,8 @@ class AirportScraper(object):
 
         # scrape everything
         try:
-            if self.fetch_china:
-                self.gen_airport_list()
+            for country in self.countries:
+                self.gen_airport_list(country)
             while self.airport_codes_list:
                 self.scrape_airport(self.airport_codes_list[0])
                 self.airport_codes_list.pop(0)
@@ -71,8 +71,8 @@ class AirportScraper(object):
         finally:
             self.driver.quit()
 
-    def gen_airport_list(self):
-        self.driver.get(self.url_prefix + 'china')
+    def gen_airport_list(self, country):
+        self.driver.get(self.url_prefix + country)
         table_rows = (self.driver
                 .find_element_by_css_selector('#tbl-datatable > tbody')
                 .find_elements_by_css_selector('tr:not(.header)')[1:]
@@ -192,6 +192,7 @@ if __name__ == "__main__":
     # Optional parameters of the scraper:
     # days_ago=0                   how many days ago (e.g. 1 day ago means get yesterday's data)
     # fetch_china=True             whether to get all china airports
+    # fetch_korea=True             whether to get all korea airports
     # additional_airports=[]       a list of additional airports to scrape
-    airport_scrapper = AirportScraper(1, True, ['sin', 'hkg'])
+    airport_scrapper = AirportScraper(0, additional_airports=['sin', 'hkg'])
     airport_scrapper.run()
