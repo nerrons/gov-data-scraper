@@ -1,7 +1,5 @@
 # scrapers
 
-Made with <3
-
 ## gov-data-scraper
 ### Usage
 ```
