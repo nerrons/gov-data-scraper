@@ -1,4 +1,4 @@
-#!/Users/nerrons/love/scraping/scrapingEnv/bin/python3.7
+#!/Users/nerrons/Documents/love/scraping/scrapingEnv/bin/python3.7
 # -*- coding: utf-8 -*-
 import re
 import sys
