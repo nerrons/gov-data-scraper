@@ -21,20 +21,24 @@ class Scraper(object):
     def __init__(self):
         super().__init__()
 
-        # constants
+        ### constants
+        # time
         self.now = time.localtime()
-        self.url_index = ''
-        self.output_dir = type(self).__name__ + '_' + time.strftime('%Y-%m-%d_%H,%M,%S', self.now) + '/'
-        filename_stem = 'output'
-        self.filename = self.output_dir + filename_stem + '.csv'
-
         self.DATE_FORMAT = '%Y/%m/%d'
-        self.data_headers = [['col1', 'col2', 'col3', 'col4']]
+        self.url_index = ''
 
-        # important info
-        self.stats = { 'stats1': 0 }
+        # paths
+        output_dir = type(self).__name__ + '_' + time.strftime('%Y-%m-%d_%H,%M,%S', self.now)
+        self.output_dir_path = (Path.cwd() / 'output' / output_dir).resolve()
+        file_name_stem = 'output'
+        file_name = file_name_stem + '.csv'
+        self.file_path = self.output_dir_path / file_name
 
-        # driver
+        ### data
+        self.cols = ['col1', 'col2', 'col3', 'col4']
+        self.df = pd.DataFrame(columns=self.cols)
+
+        ### driver
         options = Options()
         # options.headless = True
         self.driver = webdriver.Firefox(options=options)
@@ -43,19 +47,17 @@ class Scraper(object):
         # ignored_exceptions = (NoSuchElementException, StaleElementReferenceException)
         self.wait = WebDriverWait(self.driver, 10)
 
-        # logger
+        ### logger
         LOGGER_FORMAT = '%(asctime)-15s  %(message)s'
         logging.basicConfig(level=logging.INFO, format=LOGGER_FORMAT)
         self.logger = logging.getLogger(__name__)
         self.logger.info("Initialization finished.")
 
     def run(self):
-        Path('../output/' + self.output_dir).mkdir(parents=True, exist_ok=True)
-        self.logger.info('Files will be written in the directory: %s', self.output_dir)
+        self.output_dir_path.mkdir(parents=True, exist_ok=True)
+        self.logger.info('Files will be written in the directory: %s', str(self.output_dir_path))
 
         try:
-            self.write_rows(self.data_headers)
-
             self.scrape_1()
 
             self.logger.info('All done.')
@@ -83,11 +85,14 @@ class Scraper(object):
         return f
     
     def write_rows(self, rows):
-        with open(self.filename, 'a') as f:
+        for row in rows:
+            self.df = self.df.append(pd.Series(row, index=self.df.columns), ignore_index=True)
+        with self.file_path.open('a') as f:
             writer = csv.writer(f)
             writer.writerows(row for row in rows if row)
 
     def scrape_1(self):
+        css, allcss, xpath, allxpath = self.css, self.allcss, self.xpath, self.allxpath # pylint: disable=unused-variable
 
         def parse_tr(prefix_cols):
             def f(tr):
