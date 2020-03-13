@@ -21,6 +21,7 @@ class AirportScraper(object):
         super().__init__()
 
         # constants
+
         self.url_prefix = 'https://www.flightradar24.com/data/airports/'
         self.url_postfix = '/departures'
 
@@ -194,5 +195,5 @@ if __name__ == "__main__":
     # fetch_china=True             whether to get all china airports
     # fetch_korea=True             whether to get all korea airports
     # additional_airports=[]       a list of additional airports to scrape
-    airport_scrapper = AirportScraper(0, additional_airports=['sin', 'hkg'])
+    airport_scrapper = AirportScraper(1, additional_airports=['sin', 'hkg'])
     airport_scrapper.run()

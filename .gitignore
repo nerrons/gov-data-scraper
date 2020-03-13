@@ -141,3 +141,4 @@ lib/
 include/
 share/
 etc/
+.nosync
