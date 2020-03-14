@@ -102,10 +102,11 @@ class Scraper(object):
         def f(date_text):
             return datetime.strptime(date_text, input_format).strftime(output_format)
         return f
-    
-    def write_rows(self, rows):
+
+    def write_rows(self, rows, write_csv=False):
         for row in rows:
             self.df = self.df.append(pd.Series(row, index=self.df.columns), ignore_index=True)
-        with self.file_path.open('a') as f:
-            writer = csv.writer(f)
-            writer.writerows(row for row in rows if row)
+        if write_csv:
+            with self.file_path.open('a') as f:
+                writer = csv.writer(f)
+                writer.writerows(row for row in rows if row)

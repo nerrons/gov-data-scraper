@@ -31,6 +31,7 @@ class AirportScraper(object):
         self.next_day = date.today() - timedelta(days=days_ago - 1)
 
         self.output_dir = 'flightradar24_' + time.strftime('%Y-%m-%d_%H,%M,%S', time.localtime()) + '/'
+        self.output_dir_path = (Path.cwd() / 'output' / self.output_dir).resolve()
         filename_stem = self.target_day_str + '_'
         self.filename_flights = self.output_dir + filename_stem + 'flights.csv'
         self.filename_stats = self.output_dir + filename_stem + 'stats.csv'
@@ -57,8 +58,8 @@ class AirportScraper(object):
 
     def run(self):
         # make dir
-        Path(self.output_dir).mkdir(parents=True, exist_ok=True)
-        self.logger.info('Files will be written in the directory: %s', self.output_dir)
+        Path(self.output_dir_path).mkdir(parents=True, exist_ok=True)
+        self.logger.info('Files will be written in the directory: %s', self.output_dir_path)
 
         # scrape everything
         try:
@@ -88,14 +89,9 @@ class AirportScraper(object):
         self.logger.info('Airport list: %s', list(map(lambda x: x.upper(), self.airport_codes_list)))
 
     def write_flight_rows(self, rows):
-        with open(self.filename_flights, 'a') as f:
+        with self.output_dir_path.open('a') as f:
             writer = csv.writer(f)
             writer.writerows([self.target_day_str] + row for row in rows if row)
-    
-    def write_stats_row(self, code, num):
-        with open(self.filename_stats, 'a') as f:
-            writer = csv.writer(f)
-            writer.writerow([code.upper(), num])
 
     def scrape_airport(self, code):
         def parse_separator_date(text):
@@ -175,7 +171,6 @@ class AirportScraper(object):
             rows = prepare_rows()
 
             self.write_flight_rows(rows)
-            self.write_stats_row(code, len(rows))
             
             # update total stats, wrap up
             self.stats['total_num_of_flights'] += len(rows)

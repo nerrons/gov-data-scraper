@@ -1,23 +1,6 @@
-import csv
-from datetime import datetime, date, timedelta
-import logging
-import os
-from pathlib import Path
-import time
-import pandas as pd
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import (
-    NoSuchElementException, 
-    StaleElementReferenceException, 
-    ElementNotInteractableException,
-    TimeoutException
-)
+from Scraper import Scraper
 
-class Scraper(object):
+class Scraper(Scraper):
     def __init__(self):
         super().__init__()
 
