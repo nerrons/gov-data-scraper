@@ -17,7 +17,7 @@ from selenium.common.exceptions import (
 )
 
 class AirportScraper(object):
-    def __init__(self, days_ago=0, countries=['china', 'south-korea', 'italy'], additional_airports=[]):
+    def __init__(self, days_ago=0, countries=['china', 'south-korea', 'italy', 'united-kingdom', 'united-states'], additional_airports=[]):
         super().__init__()
 
         # constants
@@ -32,13 +32,13 @@ class AirportScraper(object):
 
         self.output_dir = 'flightradar24_' + time.strftime('%Y-%m-%d_%H,%M,%S', time.localtime()) + '/'
         self.output_dir_path = (Path.cwd() / 'output' / self.output_dir).resolve()
-        filename_stem = self.target_day_str + '_'
-        self.filename_flights = self.output_dir + filename_stem + 'flights.csv'
-        self.filename_stats = self.output_dir + filename_stem + 'stats.csv'
+        filename = self.target_day_str + '_flights.csv'
+        self.filename_path = (self.output_dir_path / filename).resolve()
 
         # important info
         self.countries = countries
         self.airport_codes_list = additional_airports
+        self.total_airports = 0
         self.stats = { 'total_num_of_flights': 0 }
 
         # driver
@@ -46,7 +46,7 @@ class AirportScraper(object):
         options.headless = True
         self.driver = webdriver.Firefox(options=options)
         self.driver.implicitly_wait(10)
-        self.driver.set_page_load_timeout(100)
+        self.driver.set_page_load_timeout(60)
         #ignored_exceptions = (NoSuchElementException, StaleElementReferenceException)
         self.wait = WebDriverWait(self.driver, 15)
 
@@ -63,8 +63,7 @@ class AirportScraper(object):
 
         # scrape everything
         try:
-            for country in self.countries:
-                self.gen_airport_list(country)
+            self.init_worklist()
             while self.airport_codes_list:
                 self.scrape_airport(self.airport_codes_list[0])
                 self.airport_codes_list.pop(0)
@@ -72,6 +71,11 @@ class AirportScraper(object):
             self.logger.info('Total flights: %s for %s', self.stats['total_num_of_flights'], self.target_day_str)
         finally:
             self.driver.quit()
+
+    def init_worklist(self):
+        for country in self.countries:
+            self.gen_airport_list(country)
+        self.total_airports = len(self.airport_codes_list)
 
     def gen_airport_list(self, country):
         self.driver.get(self.url_prefix + country)
@@ -89,7 +93,7 @@ class AirportScraper(object):
         self.logger.info('Airport list: %s', list(map(lambda x: x.upper(), self.airport_codes_list)))
 
     def write_flight_rows(self, rows):
-        with self.output_dir_path.open('a') as f:
+        with self.filename_path.open('a') as f:
             writer = csv.writer(f)
             writer.writerows([self.target_day_str] + row for row in rows if row)
 
@@ -154,9 +158,6 @@ class AirportScraper(object):
             except ValueError:
                 # There's no data
                 self.logger.info('No data for airport: %s', code.upper())
-                with open(self.filename_stats, 'a') as f:
-                    writer = csv.writer(f)
-                    writer.writerow([code.upper(), '0'])
                 raise ValueError
 
         try:
@@ -174,7 +175,10 @@ class AirportScraper(object):
             
             # update total stats, wrap up
             self.stats['total_num_of_flights'] += len(rows)
-            self.logger.info('Done scraping airport: %s. Got %s flights.', code.upper(), len(rows))
+            now_scraped = self.total_airports - len(self.airport_codes_list)
+            self.logger.info('(%s/%s | %s%%) Done scraping airport: %s. Got %s flights.',
+                    now_scraped, self.total_airports, "{:.2f}".format(now_scraped / self.total_airports),
+                    code.upper(), len(rows))
 
         except TimeoutException:
             self.airport_codes_list.append(code)
@@ -190,5 +194,5 @@ if __name__ == "__main__":
     # fetch_china=True             whether to get all china airports
     # fetch_korea=True             whether to get all korea airports
     # additional_airports=[]       a list of additional airports to scrape
-    airport_scrapper = AirportScraper(1, additional_airports=['sin', 'hkg'])
+    airport_scrapper = AirportScraper(1, countries=['china', 'south-korea', 'italy', 'united-kingdom', 'united-states'], additional_airports=['sin', 'hkg'])
     airport_scrapper.run()
