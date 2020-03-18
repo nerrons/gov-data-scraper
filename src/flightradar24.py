@@ -43,7 +43,7 @@ class AirportScraper(object):
 
         # driver
         options = Options()
-        options.headless = True
+        #options.headless = True
         self.driver = webdriver.Firefox(options=options)
         self.driver.implicitly_wait(10)
         self.driver.set_page_load_timeout(60)
@@ -57,6 +57,7 @@ class AirportScraper(object):
         self.logger.info("Initialization finished.")
 
     def run(self):
+        self.logger.info('Running parser for date: %s', self.target_day_str)
         # make dir
         Path(self.output_dir_path).mkdir(parents=True, exist_ok=True)
         self.logger.info('Files will be written in the directory: %s', self.output_dir_path)
@@ -148,6 +149,9 @@ class AirportScraper(object):
             today_flights = self.driver.find_elements_by_css_selector("tr[data-date*='" + self.target_day + "']")
             return list(map(parse_flight_row, today_flights))
 
+        def get_progress():
+            return (self.total_airports - len(self.airport_codes_list), "{:.2f}".format(now_scraped / self.total_airports * 100))
+
         def test_have_data():
             try:
                 sorry = self.driver.find_element_by_xpath("//*[contains(text(), 'have any information about flights for this airport')]")
@@ -157,7 +161,8 @@ class AirportScraper(object):
                 return
             except ValueError:
                 # There's no data
-                self.logger.info('No data for airport: %s', code.upper())
+                now_scraped, percent = get_progress()
+                self.logger.info('(%s/%s | %s%%) No data for airport: %s', now_scraped, self.total_airports, percent, code.upper())
                 raise ValueError
 
         try:
@@ -175,10 +180,9 @@ class AirportScraper(object):
             
             # update total stats, wrap up
             self.stats['total_num_of_flights'] += len(rows)
-            now_scraped = self.total_airports - len(self.airport_codes_list)
+            now_scraped, percent = get_progress()
             self.logger.info('(%s/%s | %s%%) Done scraping airport: %s. Got %s flights.',
-                    now_scraped, self.total_airports, "{:.2f}".format(now_scraped / self.total_airports),
-                    code.upper(), len(rows))
+                    now_scraped, self.total_airports, percent, code.upper(), len(rows))
 
         except TimeoutException:
             self.airport_codes_list.append(code)

@@ -41,7 +41,7 @@ class AemoMapScraper(object):
         # driver
         options = Options()
         # options.headless = True
-        self.driver = webdriver.Firefox(options=options)
+        self.driver = webdriver.Chrome(options=options)
         self.driver.implicitly_wait(10)
         self.driver.set_page_load_timeout(300)
         # ignored_exceptions = (NoSuchElementException, StaleElementReferenceException)
