@@ -43,7 +43,7 @@ class AirportScraper(object):
 
         # driver
         options = Options()
-        #options.headless = True
+        options.headless = True
         self.driver = webdriver.Firefox(options=options)
         self.driver.implicitly_wait(10)
         self.driver.set_page_load_timeout(60)
@@ -150,7 +150,8 @@ class AirportScraper(object):
             return list(map(parse_flight_row, today_flights))
 
         def get_progress():
-            return (self.total_airports - len(self.airport_codes_list), "{:.2f}".format(now_scraped / self.total_airports * 100))
+            now_scraped = self.total_airports - len(self.airport_codes_list)
+            return "({}/{} | {:.2f})".format(now_scraped, self.total_airports, now_scraped / self.total_airports * 100)
 
         def test_have_data():
             try:
@@ -161,8 +162,7 @@ class AirportScraper(object):
                 return
             except ValueError:
                 # There's no data
-                now_scraped, percent = get_progress()
-                self.logger.info('(%s/%s | %s%%) No data for airport: %s', now_scraped, self.total_airports, percent, code.upper())
+                self.logger.info('%s No data for airport: %s', get_progress(), code.upper())
                 raise ValueError
 
         try:
@@ -180,9 +180,7 @@ class AirportScraper(object):
             
             # update total stats, wrap up
             self.stats['total_num_of_flights'] += len(rows)
-            now_scraped, percent = get_progress()
-            self.logger.info('(%s/%s | %s%%) Done scraping airport: %s. Got %s flights.',
-                    now_scraped, self.total_airports, percent, code.upper(), len(rows))
+            self.logger.info('%s Done scraping airport: %s. Got %s flights.', get_progress(), code.upper(), len(rows))
 
         except TimeoutException:
             self.airport_codes_list.append(code)
