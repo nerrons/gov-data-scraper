@@ -17,7 +17,7 @@ from selenium.common.exceptions import (
 
 # setup
 options = Options()
-options.headless = True
+#options.headless = True
 fp = webdriver.FirefoxProfile()
 fp.set_preference("browser.download.folderList", 2)
 fp.set_preference("browser.download.dir", str(Path.cwd()))
@@ -30,14 +30,16 @@ driver.implicitly_wait(30)
 actions = ActionChains(driver)
 
 # find elem and click
-driver.get('https://www.eia.gov/opendata/qb.php?category=3389935&sdid=EBA.US48-ALL.D.H')
-rect = driver.find_element_by_css_selector('.highcharts-container svg .highcharts-button > rect')
-actions.move_to_element(rect).click(rect).perform()
-context_menu = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, 'div.contextmenu')))
-download_b = context_menu.find_element_by_xpath("//div[contains(text(), 'Download Data')]")
+driver.get('http://gridwatch.templar.co.uk/download.php')
+plus_b = driver.find_element_by_css_selector('#startyearvalue + div')
+year = int(driver.find_element_by_css_selector('#startyearvalue').text)
+while year < 2019:
+    plus_b.click()
+    year = int(driver.find_element_by_css_selector('#startyearvalue').text)
+
+download_b = driver.find_element_by_xpath("//div[contains(text(), 'DOWNLOAD')]")
 download_b.click()
 
-# wait for the download to complete
 while(True):
     files = ' '.join([str(x).lower() for x in Path.cwd().iterdir()])
     if '.part' not in files: break
@@ -45,4 +47,3 @@ while(True):
 
 # wrap up
 print(f'csv downloaded to {Path.cwd()}')
-driver.quit()
