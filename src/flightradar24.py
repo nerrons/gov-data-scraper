@@ -140,18 +140,18 @@ class AirportScraper(object):
                 departure_airport = code.upper()
                 flight_time = row.find_element_by_css_selector('td.ng-binding').text
                 flight_number = row.find_element_by_css_selector('td.cell-flight-number > a.notranslate.ng-binding').text
-                airline = row.find_element_by_css_selector('td.cell-airline > a.notranslate.ng-binding').text.strip()
-                dest_city = row.find_element_by_css_selector('td:nth-child(3) > div:nth-child(1) > span').text.strip()
+                #airline = row.find_element_by_css_selector('td.cell-airline > a.notranslate.ng-binding').text.strip()
+                #dest_city = row.find_element_by_css_selector('td:nth-child(3) > div:nth-child(1) > span').text.strip()
                 dest_airport = row.find_element_by_css_selector('td:nth-child(3) > div:nth-child(1) > a.notranslate.ng-binding').text[1:-1]
                 status = row.find_element_by_css_selector('td:nth-child(7) > span.ng-binding').text
-                return [departure_airport, flight_time, flight_number, dest_city, dest_airport, airline, status]
+                return [departure_airport, flight_time, flight_number, dest_airport, status]
 
             today_flights = self.driver.find_elements_by_css_selector("tr[data-date*='" + self.target_day + "']")
             return list(map(parse_flight_row, today_flights))
 
         def get_progress():
             now_scraped = self.total_airports - len(self.airport_codes_list)
-            return "({}/{} | {:.2f})".format(now_scraped, self.total_airports, now_scraped / self.total_airports * 100)
+            return "({}/{} | {:.2f}%)".format(now_scraped, self.total_airports, now_scraped / self.total_airports * 100)
 
         def test_have_data():
             try:

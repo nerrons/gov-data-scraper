@@ -5,7 +5,7 @@ import os
 import logging
 from pathlib import Path
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -37,13 +37,13 @@ class AusLNGScraper(object):
         # driver
         options = Options()
         # options.headless = True
-        fp = webdriver.FirefoxProfile()
-        fp.set_preference("browser.download.folderList", 2)
-        fp.set_preference("browser.download.dir", str(Path.cwd()) + '/' + self.output_dir)
-        fp.set_preference("browser.helperApps.neverAsk.openFile", "application/pdf, application/x-pdf")
-        fp.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/pdf")
-        fp.set_preference("pdfjs.disabled", True)
-        self.driver = webdriver.Firefox(fp, options=options)
+        options.add_experimental_option("prefs", {
+            "download.default_directory": str(Path.cwd()),
+            "download.prompt_for_download": False,
+            "download.directory_upgrade": True,
+            "safebrowsing.enabled": True
+        })
+        self.driver = webdriver.Chrome(options=options)
         self.driver.implicitly_wait(1)
         self.driver.set_page_load_timeout(40)
         #ignored_exceptions = (NoSuchElementException, StaleElementReferenceException)

@@ -41,7 +41,7 @@ download_b.click()
 while(True):
     files = ' '.join([str(x).lower() for x in Path.cwd().iterdir()])
     if '.part' not in files: break
-    time.sleep(1)
+    time.sleep(1) 
 
 # wrap up
 print(f'csv downloaded to {Path.cwd()}')
