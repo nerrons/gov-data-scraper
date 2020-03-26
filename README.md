@@ -22,3 +22,12 @@ Results will be written into 2 csv files. One contains flight details of all air
 source bin/activate
 ./bin/python flightradar24.py
 ```
+
+## delete the content of a direct
+```
+import os
+from shutil import rmtree
+
+rmtree('/path/to/folder')
+os.makedirs('/path/to/folder')
+```
