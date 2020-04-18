@@ -1,5 +1,6 @@
 import csv
 from datetime import datetime, date, timedelta
+import dateparser
 import logging
 import os
 from pathlib import Path
@@ -25,17 +26,15 @@ class RimIntelScraper(object):
         # constants
         self.url_index = 'https://eng.rim-intelligence.co.jp/news/topics/nuclear/'
         self.output_dir = type(self).__name__ + '_' + time.strftime('%Y-%m-%d_%H,%M,%S', time.localtime()) + '/'
-        filename_stem = 'output'
-        self.filename = self.output_dir + filename_stem + '.csv'
+        self.output_dir_path = (Path.cwd() / 'output' / self.output_dir).resolve()
+        filename = 'output.csv'
+        self.filename_path = (self.output_dir_path / filename).resolve()
 
         self.DATE_FORMAT = '%Y/%m/%d'
         self.data_headers = [['facility', 'start_date', 'end_date', 'notes']]
 
         self.username = 'tony.zhu@glencore.com.sg'
         self.password = 'G856mT5'
-
-        # important info
-        self.stats = { 'stats1': 0 }
 
         # driver
         options = Options()
@@ -54,8 +53,8 @@ class RimIntelScraper(object):
 
     def run(self):
         # Make directories for output
-        Path(self.output_dir).mkdir(parents=True, exist_ok=True)
-        self.logger.info('Files will be written in the directory: %s', self.output_dir)
+        Path(self.output_dir_path).mkdir(parents=True, exist_ok=True)
+        self.logger.info('Files will be written in the directory: %s', self.output_dir_path)
 
         # Log in with credentials
         self.login()
@@ -67,13 +66,17 @@ class RimIntelScraper(object):
 
             self.logger.info('All done.')
         finally:
-            self.driver.quit()
+            pass
+            #self.driver.quit()
 
     def standardize_date(self, input_format):
         output_format = self.DATE_FORMAT
         def f(date_text):
             if date_text == 'TBD': return '--'
-            return datetime.strptime(date_text, input_format).strftime(output_format)
+            try:
+                return datetime.strptime(date_text, input_format).strftime(output_format)
+            except:
+                return dateparser.parse(date_text).strftime(output_format)
         return f
 
     def full2half(self, s):
@@ -90,7 +93,7 @@ class RimIntelScraper(object):
         return ''.join(n)
     
     def write_rows(self, rows):
-        with open(self.filename, 'a') as f:
+        with self.filename_path.open('a') as f:
             writer = csv.writer(f)
             writer.writerows(row for row in rows if row)
 
@@ -124,12 +127,21 @@ class RimIntelScraper(object):
                 try:
                     tds = tr.find_elements_by_tag_name('td')
                     # status = tds[6].find_element_by_tag_name('p').get_attribute('innerText')
-                    notes = self.full2half(tds[7].find_element_by_tag_name('p').get_attribute('innerText')).replace('\n', ' | ')
-                    checkup_dates_str = list(map(lambda s: list(map(lambda x: x.replace(' ', ''), s)), re.findall(regex, notes)))
-                    if len(checkup_dates_str[0]) == 4:
-                        checkup_dates_str = list(map(lambda tup: list(filter(None, tup)), checkup_dates_str))
+                    notes = self.full2half(tds[7].find_element_by_tag_name('p').get_attribute('innerText')).replace(';', '').replace('\n', ' | ')
+                    found = re.findall(regex, notes)
+                    checkup_dates_str = list(map(lambda s: list(map(lambda x: x.replace(' ', ''), s)), found))
+                    # checkup_dates_str = [ [ d.replace(' ', '') for d in f ] for f in found ]
+
+                    if checkup_dates_str and len(checkup_dates_str[0]) == 4:
+                        # filter(None, l) gets rid of all None in l
+                        checkup_dates_str = [ list(filter(None, tup)) for tup in checkup_dates_str ]
+                    else:
+                        self.logger.info('Strange, no dates for facility %s.', facility)
+                        raise ValueError
+
                     self.logger.info('checkup_dates_str %s', checkup_dates_str)
                     checkup_dates = list(map(lambda tup: list(map(self.standardize_date('%d/%b/%y'), tup)), checkup_dates_str))
+                    # checkup_dates = [ [ self.standardize_date('%d/%b/%y')(tup) for tup in date ] for date in checkup_dates_str ]
                     self.logger.info('checkup_dates: %s', checkup_dates)
                     return [[facility, dates[0], dates[1], notes] for dates in checkup_dates]
                 except ValueError:
