@@ -274,5 +274,11 @@ if __name__ == "__main__":
     # Optional parameters of the scraper:
     # days_ago=0                   how many days ago (e.g. 1 day ago means get yesterday's data)
     # additional_airports=[]       a list of additional airports to scrape
-    airport_scrapper = AirportScraper(1, countries=['china', 'south-korea', 'italy', 'united-kingdom', 'united-states'], additional_airports=airports)
+    current_time = datetime.now()
+    today_deadline = current_time.replace(hour=20, minute=0, second=0, microsecond=0)
+    if current_time > today_deadline:
+        days_ago = 0
+    else:
+        days_ago = 1
+    airport_scrapper = AirportScraper(days_ago, countries=['china', 'south-korea', 'italy', 'united-kingdom', 'united-states'], additional_airports=airports)
     airport_scrapper.run()
