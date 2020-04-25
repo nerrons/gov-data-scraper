@@ -75,6 +75,7 @@ class AirportScraper(object):
 
             self.logger.info('Total flights: %s for %s', self.stats['total_num_of_flights'], self.target_day_str)
         finally:
+            self.logger.info('%s', self.airport_codes_list)
             self.driver.quit()
 
     def init_worklist(self):
@@ -155,7 +156,7 @@ class AirportScraper(object):
             return list(map(parse_flight_row, today_flights))
 
         def get_progress():
-            now_scraped = self.total_airports - len(self.airport_codes_list)
+            now_scraped = self.total_airports - len(self.airport_codes_list) + 1
             return "({}/{} | {:.2f}%)".format(now_scraped, self.total_airports, now_scraped / self.total_airports * 100)
 
         def test_have_data():
@@ -275,7 +276,7 @@ if __name__ == "__main__":
     # days_ago=0                   how many days ago (e.g. 1 day ago means get yesterday's data)
     # additional_airports=[]       a list of additional airports to scrape
     current_time = datetime.now()
-    today_deadline = current_time.replace(hour=20, minute=0, second=0, microsecond=0)
+    today_deadline = current_time.replace(hour=21, minute=0, second=0, microsecond=0)
     if current_time > today_deadline:
         days_ago = 0
     else:
