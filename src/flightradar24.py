@@ -4,6 +4,7 @@ import time
 import os
 from pathlib import Path
 import logging
+import logging.config
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
@@ -33,10 +34,13 @@ class AirportScraper(object):
         self.prev_day = date.today() - timedelta(days=days_ago + 1)
         self.next_day = date.today() - timedelta(days=days_ago - 1)
 
+        # paths
         self.output_dir = 'flightradar24_' + time.strftime('%Y-%m-%d_%H,%M,%S', time.localtime()) + '/'
         self.output_dir_path = (Path.cwd() / 'output' / self.output_dir).resolve()
         filename = self.target_day_str + '_flights.csv'
         self.filename_path = (self.output_dir_path / filename).resolve()
+        logs_path = (self.output_dir_path / (filename[:-4] + '.log')).resolve()
+        Path(self.output_dir_path).mkdir(parents=True, exist_ok=True)
 
         # important info
         self.fetch_airport_list = fetch_airport_list
@@ -56,14 +60,12 @@ class AirportScraper(object):
 
         # logger
         FORMAT = '%(asctime)-15s  %(message)s'
-        logging.basicConfig(level=logging.INFO, format=FORMAT)
+        logging.basicConfig(level=logging.INFO, format=FORMAT, filemode='a', filename=str(logs_path))
         self.logger = logging.getLogger(__name__)
         self.logger.info("Initialization finished.")
 
     def run(self):
         self.logger.info('Running parser for date: %s', self.target_day_str)
-        # make dir
-        Path(self.output_dir_path).mkdir(parents=True, exist_ok=True)
         self.logger.info('Files will be written in the directory: %s', self.output_dir_path)
 
         # scrape everything
