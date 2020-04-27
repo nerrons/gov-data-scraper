@@ -6,7 +6,8 @@ from pathlib import Path
 import logging
 import logging.config
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+#from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -52,7 +53,7 @@ class AirportScraper(object):
         # driver
         options = Options()
         options.headless = True
-        self.driver = webdriver.Firefox(options=options)
+        self.driver = webdriver.Chrome(options=options)
         self.driver.implicitly_wait(10)
         self.driver.set_page_load_timeout(80)
         #ignored_exceptions = (NoSuchElementException, StaleElementReferenceException)
