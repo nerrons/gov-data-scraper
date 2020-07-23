@@ -19,6 +19,8 @@ from selenium.common.exceptions import (
 
 class Scraper(object):
     def __init__(self, cols):
+        '''pass in the columns of the csv'''
+
         super().__init__()
 
         ### constants
@@ -64,7 +66,7 @@ class Scraper(object):
             self.logger.info('All done.')
         finally:
             self.driver.quit()
-        
+
         return self.df
 
     # helper functions to make code more concise

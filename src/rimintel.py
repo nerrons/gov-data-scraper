@@ -7,7 +7,7 @@ from pathlib import Path
 import time
 import re
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -36,10 +36,12 @@ class RimIntelScraper(object):
         self.username = 'tony.zhu@glencore.com.sg'
         self.password = 'G856mT5'
 
+        self.res = []
+
         # driver
         options = Options()
         # options.headless = True
-        self.driver = webdriver.Firefox(options=options)
+        self.driver = webdriver.Chrome(options=options)
         self.driver.implicitly_wait(10)
         self.driver.set_page_load_timeout(120)
         # ignored_exceptions = (NoSuchElementException, StaleElementReferenceException)
@@ -93,6 +95,7 @@ class RimIntelScraper(object):
         return ''.join(n)
     
     def write_rows(self, rows):
+        self.res.extend(rows)
         with self.filename_path.open('a') as f:
             writer = csv.writer(f)
             writer.writerows(row for row in rows if row)
@@ -135,7 +138,7 @@ class RimIntelScraper(object):
                     if checkup_dates_str and len(checkup_dates_str[0]) == 4:
                         # filter(None, l) gets rid of all None in l
                         checkup_dates_str = [ list(filter(None, tup)) for tup in checkup_dates_str ]
-                    else:
+                    elif not checkup_dates_str:
                         self.logger.info('Strange, no dates for facility %s.', facility)
                         raise ValueError
 
@@ -167,3 +170,4 @@ class RimIntelScraper(object):
 if __name__ == "__main__":
     s = RimIntelScraper()
     s.run()
+    print(s.res)
